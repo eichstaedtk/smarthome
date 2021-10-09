@@ -11,12 +11,11 @@
  * SPDX-License-Identifier: EPL-2.0
  */
 
-package org.openhab.binding.googletask;
+package org.openhab.binding.googletask.internal;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import org.junit.jupiter.api.Test;
-import org.openhab.binding.googletask.internal.GoogleTaskConfiguration;
 
 /**
  * Testing the Google API Configuration

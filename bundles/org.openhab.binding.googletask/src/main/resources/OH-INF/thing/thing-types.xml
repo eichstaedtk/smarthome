@@ -5,18 +5,19 @@
 	xsi:schemaLocation="https://openhab.org/schemas/thing-description/v1.0.0 https://openhab.org/schemas/thing-description-1.0.0.xsd">
 
 	<!-- Sample Thing Type -->
-	<thing-type id="sample">
+	<thing-type id="googletaskapi">
 		<!-- Comment this in for Things which need a Bridge to function.
 			<supported-bridge-type-refs>
 			<bridge-type-ref id="GoogleTaskBridge" />
 			</supported-bridge-type-refs>
 		-->
 
-		<label>GoogleTask Binding Thing</label>
-		<description>Sample thing for GoogleTask Binding</description>
+		<label>Google Task API Binding Thing</label>
+		<description>API for GoogleTask Binding</description>
 
 		<channels>
-			<channel id="channel1" typeId="sample-channel"/>
+			<channel id="gettasks" typeId="gettasks-channel"/>
+			<channel id="addtasks" typeId="addtasks-channel"/>
 		</channels>
 
 		<config-description>
@@ -38,9 +39,9 @@
 	</thing-type>
 
 	<!-- Sample Channel Type -->
-	<channel-type id="sample-channel">
-		<item-type>Number:Temperature</item-type>
-		<label>Example Temperature</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
-		<description>Sample channel for GoogleTask Binding</description>
+	<channel-type id="gettasks-channel">
+		<item-type>String:Tasks</item-type>
+		<label>Task of User</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
+		<description>Google Task API Get Tasks channel for GoogleTask Binding</description>
 	</channel-type>
 </thing:thing-descriptions>

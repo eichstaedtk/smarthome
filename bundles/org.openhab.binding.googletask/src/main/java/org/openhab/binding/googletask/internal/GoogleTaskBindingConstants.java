@@ -27,8 +27,9 @@ public class GoogleTaskBindingConstants {
     private static final String BINDING_ID = "googletask";
 
     // List of all Thing Type UIDs
-    public static final ThingTypeUID THING_TYPE_SAMPLE = new ThingTypeUID(BINDING_ID, "sample");
+    public static final ThingTypeUID THING_TYPE_GOOGLE_TASK_API = new ThingTypeUID(BINDING_ID, "googletaskapi");
 
     // List of all Channel ids
-    public static final String CHANNEL_1 = "channel1";
+    public static final String CHANNEL_GET_TASKS = "gettasks";
+    public static final String CHANNEL_ADD_TASKS = "addtasks";
 }
