@@ -12,6 +12,8 @@
  */
 package org.openhab.binding.googletask.internal;
 
+import java.io.InputStream;
+
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.thing.ChannelUID;
@@ -38,6 +40,12 @@ public class GoogleTaskHandler extends BaseThingHandler {
 
     public GoogleTaskHandler(Thing thing) {
         super(thing);
+    }
+
+    private static final String CREDENTIALS_FILE_PATH = "/client_secret.json";
+
+    private void createCredentials() {
+        InputStream secretInputStream = GoogleTaskHandler.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
     }
 
     @Override
