@@ -12,8 +12,24 @@
  */
 package org.openhab.binding.googletask.internal;
 
-import java.io.InputStream;
+import static org.osgi.service.application.ApplicationDescriptor.APPLICATION_NAME;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.security.GeneralSecurityException;
+import java.util.Collections;
+import java.util.List;
+
+import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
+import com.google.api.client.auth.oauth2.BearerToken;
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.auth.oauth2.StoredCredential;
+import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
+import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.javanet.NetHttpTransport;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.thing.ChannelUID;
@@ -24,6 +40,17 @@ import org.openhab.core.types.Command;
 import org.openhab.core.types.RefreshType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
+import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
+import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
+import com.google.api.client.http.BasicAuthentication;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.gson.GsonFactory;
+import com.google.api.client.util.store.FileDataStoreFactory;
+import com.google.api.services.tasks.Tasks;
+import com.google.api.services.tasks.TasksScopes;
+import com.google.api.services.tasks.model.TaskList;
 
 /**
  * The {@link GoogleTaskHandler} is responsible for handling commands, which are
@@ -43,9 +70,33 @@ public class GoogleTaskHandler extends BaseThingHandler {
     }
 
     private static final String CREDENTIALS_FILE_PATH = "/client_secret.json";
+    private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
+    private static final List<String> SCOPES = Collections.singletonList(TasksScopes.TASKS_READONLY);
+    private static final String TOKENS_DIRECTORY_PATH = "tokens";
 
-    private void createCredentials() {
+    private Credential createCredentials() throws IOException, GeneralSecurityException {
         InputStream secretInputStream = GoogleTaskHandler.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
+
+        GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY,
+                new InputStreamReader(secretInputStream));
+
+        GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
+                GoogleNetHttpTransport.newTrustedTransport(), JSON_FACTORY, clientSecrets, SCOPES)
+                        .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH)))
+                        .setAccessType("offline").build();
+
+        return new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver()).authorize("user");
+    }
+
+    public void readTasks() throws GeneralSecurityException, IOException {
+
+        Tasks service = new Tasks.Builder(GoogleNetHttpTransport.newTrustedTransport(), JSON_FACTORY,
+                createCredentials())
+                        .setApplicationName(APPLICATION_NAME).build();
+
+        TaskList tasklists = service.tasklists().get("Familienaufgaben").execute();
+
+        logger.info("Getting tasks {} ", tasklists.size());
     }
 
     @Override
