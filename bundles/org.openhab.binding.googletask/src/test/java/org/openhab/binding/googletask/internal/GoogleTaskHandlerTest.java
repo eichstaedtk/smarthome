@@ -29,6 +29,8 @@ public class GoogleTaskHandlerTest {
 
         assertNotNull(handler);
 
+        handler.createCredentials();
+
         handler.readTasks();
     }
 }

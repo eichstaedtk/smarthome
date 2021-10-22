@@ -70,11 +70,15 @@ public class GoogleTaskHandler extends BaseThingHandler {
     }
 
     private static final String CREDENTIALS_FILE_PATH = "/client_secret.json";
+
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
-    private static final List<String> SCOPES = Collections.singletonList(TasksScopes.TASKS_READONLY);
+
+    private static final List<String> SCOPES = List
+        .of(TasksScopes.TASKS_READONLY, TasksScopes.TASKS);
+
     private static final String TOKENS_DIRECTORY_PATH = "tokens";
 
-    private Credential createCredentials() throws IOException, GeneralSecurityException {
+    public Credential createCredentials() throws IOException, GeneralSecurityException {
         InputStream secretInputStream = GoogleTaskHandler.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
 
         GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY,
@@ -83,9 +87,11 @@ public class GoogleTaskHandler extends BaseThingHandler {
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
                 GoogleNetHttpTransport.newTrustedTransport(), JSON_FACTORY, clientSecrets, SCOPES)
                         .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH)))
-                        .setAccessType("offline").build();
+                        .build();
 
-        return new AuthorizationCodeInstalledApp(flow, new LocalServerReceiver()).authorize("user");
+        LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8080).setCallbackPath("/openhab").build();
+
+        return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
     }
 
     public void readTasks() throws GeneralSecurityException, IOException {
@@ -94,7 +100,7 @@ public class GoogleTaskHandler extends BaseThingHandler {
                 createCredentials())
                         .setApplicationName(APPLICATION_NAME).build();
 
-        TaskList tasklists = service.tasklists().get("Familienaufgaben").execute();
+        TaskList tasklists = service.tasklists().get("MTc0NDQ5MDgzNTM0NTY0ODE1Nzg6MDow").execute();
 
         logger.info("Getting tasks {} ", tasklists.size());
     }
