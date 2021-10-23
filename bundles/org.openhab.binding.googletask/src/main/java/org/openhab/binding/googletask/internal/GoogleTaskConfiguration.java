@@ -17,7 +17,7 @@ package org.openhab.binding.googletask.internal;
  *
  * @author Konrad Eichstädt - Initial contribution
  */
-public class  GoogleTaskConfiguration {
+public class GoogleTaskConfiguration {
 
     /**
      * Sample configuration parameters. Replace with your own.

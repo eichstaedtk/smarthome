@@ -14,22 +14,12 @@ package org.openhab.binding.googletask.internal;
 
 import static org.osgi.service.application.ApplicationDescriptor.APPLICATION_NAME;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
-import java.util.Collections;
 import java.util.List;
 
-import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
-import com.google.api.client.auth.oauth2.BearerToken;
-import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.auth.oauth2.StoredCredential;
-import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
-import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.javanet.NetHttpTransport;
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
 import org.openhab.core.thing.ChannelUID;
@@ -41,10 +31,12 @@ import org.openhab.core.types.RefreshType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.api.client.auth.oauth2.Credential;
+import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
+import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
-import com.google.api.client.http.BasicAuthentication;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.store.FileDataStoreFactory;
@@ -73,8 +65,7 @@ public class GoogleTaskHandler extends BaseThingHandler {
 
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
-    private static final List<String> SCOPES = List
-        .of(TasksScopes.TASKS_READONLY, TasksScopes.TASKS);
+    private static final List<String> SCOPES = List.of(TasksScopes.TASKS_READONLY, TasksScopes.TASKS);
 
     private static final String TOKENS_DIRECTORY_PATH = "tokens";
 
@@ -86,10 +77,10 @@ public class GoogleTaskHandler extends BaseThingHandler {
 
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
                 GoogleNetHttpTransport.newTrustedTransport(), JSON_FACTORY, clientSecrets, SCOPES)
-                        .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH)))
-                        .build();
+                        .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH))).build();
 
-        LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8080).setCallbackPath("/openhab").build();
+        LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8080).setCallbackPath("/openhab")
+                .build();
 
         return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
     }
@@ -97,8 +88,7 @@ public class GoogleTaskHandler extends BaseThingHandler {
     public void readTasks() throws GeneralSecurityException, IOException {
 
         Tasks service = new Tasks.Builder(GoogleNetHttpTransport.newTrustedTransport(), JSON_FACTORY,
-                createCredentials())
-                        .setApplicationName(APPLICATION_NAME).build();
+                createCredentials()).setApplicationName(APPLICATION_NAME).build();
 
         TaskList tasklists = service.tasklists().get("MTc0NDQ5MDgzNTM0NTY0ODE1Nzg6MDow").execute();
 

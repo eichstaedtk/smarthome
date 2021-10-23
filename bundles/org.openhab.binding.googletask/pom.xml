@@ -10,6 +10,13 @@
     <version>3.2.0-SNAPSHOT</version>
   </parent>
 
+  <properties>
+    <bnd.importpackage>com.google.api-client.*;resolution:=optional, com.google.oauth-client.*;resolution:=optional,\
+      com.google.api.client.*;resolution:=optional, com.sun.net.*;resolution:=optional,
+      org.apache.http.client.*;resolution:=optional
+    </bnd.importpackage>
+  </properties>
+
   <artifactId>org.openhab.binding.googletask</artifactId>
 
   <name>openHAB Add-ons :: Bundles :: GoogleTask Binding</name>
@@ -19,12 +26,14 @@
       <groupId>com.google.api-client</groupId>
       <artifactId>google-api-client</artifactId>
       <version>1.32.1</version>
+      <scope>compile</scope>
     </dependency>
     <!-- https://mvnrepository.com/artifact/com.google.oauth-client/google-oauth-client-jetty -->
     <dependency>
       <groupId>com.google.oauth-client</groupId>
       <artifactId>google-oauth-client-jetty</artifactId>
       <version>1.32.1</version>
+      <scope>compile</scope>
     </dependency>
 
     <!-- https://mvnrepository.com/artifact/com.google.apis/google-api-services-tasks -->
@@ -32,6 +41,7 @@
       <groupId>com.google.apis</groupId>
       <artifactId>google-api-services-tasks</artifactId>
       <version>v1-rev71-1.25.0</version>
+      <scope>compile</scope>
     </dependency>
 
   </dependencies>
