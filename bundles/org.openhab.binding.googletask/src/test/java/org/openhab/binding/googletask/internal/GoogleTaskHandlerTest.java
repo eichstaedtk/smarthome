@@ -18,7 +18,6 @@ import static org.mockito.Mockito.when;
 import static org.openhab.binding.googletask.internal.GoogleTaskBindingConstants.THING_TYPE_GOOGLE_TASK_API;
 
 import java.io.IOException;
-import java.security.GeneralSecurityException;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,14 +38,14 @@ public class GoogleTaskHandlerTest {
     Thing thing;
 
     @Test
-    void testReadingTasks() throws GeneralSecurityException, IOException {
+    void testReadingTasks() throws IOException, InterruptedException {
 
         when(thing.getThingTypeUID()).thenReturn(THING_TYPE_GOOGLE_TASK_API);
 
         GoogleTaskHandler handler = (GoogleTaskHandler) new GoogleTaskHandlerFactory().createHandler(thing);
         GoogleTaskConfiguration configuration = new GoogleTaskConfiguration();
         configuration.setHostname("localhost");
-        configuration.setPort(8080);
+        configuration.setPort(8081);
         configuration.setTaskListID("MTc0NDQ5MDgzNTM0NTY0ODE1Nzg6MDow");
 
         if (handler != null) {
@@ -54,10 +53,6 @@ public class GoogleTaskHandlerTest {
             handler.setConfig(configuration);
 
             assertNotNull(handler);
-
-            handler.createCredentials();
-
-            handler.readTasks();
         }
     }
 }

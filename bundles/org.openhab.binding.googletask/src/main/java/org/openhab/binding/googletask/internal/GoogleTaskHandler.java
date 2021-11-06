@@ -17,8 +17,14 @@ import static org.osgi.service.application.ApplicationDescriptor.APPLICATION_NAM
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.security.GeneralSecurityException;
+import java.time.Duration;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
@@ -33,6 +39,7 @@ import org.openhab.core.types.RefreshType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
 import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
@@ -58,6 +65,10 @@ public class GoogleTaskHandler extends BaseThingHandler {
     private final Logger logger = LoggerFactory.getLogger(GoogleTaskHandler.class);
 
     private @Nullable GoogleTaskConfiguration config;
+
+    private @Nullable String oauth2accessToken;
+
+    private @Nullable String oauth2refreshToken;
 
     public GoogleTaskHandler(Thing thing) {
         super(thing);
@@ -129,6 +140,64 @@ public class GoogleTaskHandler extends BaseThingHandler {
         }
     }
 
+    public void getAuthorizationResponse(String deviceCode) {
+
+        HttpClient httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2)
+                .connectTimeout(Duration.ofSeconds(10)).build();
+
+        HttpRequest request = HttpRequest.newBuilder().POST(HttpRequest.BodyPublishers.ofString(
+                "client_id=60812911905-og6ku0g78g7f3gg2rkmkhlf1avl5iele.apps.googleusercontent.com&client_secret=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"
+                        + "&device_code=" + deviceCode
+                        + "&grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Adevice_code"))
+                .uri(URI.create("https://oauth2.googleapis.com/token"))
+                .setHeader("User-Agent", "Java 11 HttpClient Bot") // add request header
+                .header("Content-Type", "application/x-www-form-urlencoded").build();
+
+        logger.info("Sending Request {} ", request.uri().toString());
+
+        try {
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            ObjectMapper mapper = new ObjectMapper();
+
+            GoogleAuthentificationResponse authentificationResponse = mapper.readValue(response.body(),
+                    GoogleAuthentificationResponse.class);
+
+            logger.info("Getting Google Device Authorization Response {} ", authentificationResponse);
+
+            if (authentificationResponse != null && authentificationResponse.getAccessToken() != null) {
+                this.oauth2accessToken = authentificationResponse.getAccessToken();
+                this.oauth2refreshToken = authentificationResponse.getRefreshToken();
+
+                updateStatus(ThingStatus.ONLINE);
+            }
+
+        } catch (Exception error) {
+            logger.error("Error during getting access token ", error);
+        }
+    }
+
+    public GoogleDeviceCodeResponse getAuthorizationforDevices() throws IOException, InterruptedException {
+
+        HttpClient httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2)
+                .connectTimeout(Duration.ofSeconds(10)).build();
+
+        HttpRequest request = HttpRequest.newBuilder().POST(HttpRequest.BodyPublishers.ofString(
+                "client_id=60812911905-og6ku0g78g7f3gg2rkmkhlf1avl5iele.apps.googleusercontent.com&scope=email"))
+                .uri(URI.create("https://oauth2.googleapis.com/device/code"))
+                .setHeader("User-Agent", "Java 11 HttpClient Bot") // add request header
+                .header("Content-Type", "application/x-www-form-urlencoded").build();
+
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        ObjectMapper mapper = new ObjectMapper();
+        GoogleDeviceCodeResponse googleDeviceCodeResponse = mapper.readValue(response.body(),
+                GoogleDeviceCodeResponse.class);
+        logger.info("Getting Google Device Authorization Code Response {} ", googleDeviceCodeResponse);
+        return googleDeviceCodeResponse;
+    }
+
     @Override
     public void initialize() {
         config = getConfigAs(GoogleTaskConfiguration.class);
@@ -146,30 +215,24 @@ public class GoogleTaskHandler extends BaseThingHandler {
         // we set this upfront to reliably check status updates in unit tests.
         updateStatus(ThingStatus.UNKNOWN);
 
+        // Example for background initialization:
+        logger.info("Start initialization GoogleTasks....");
+
         try {
-            readTasks();
-            updateStatus(ThingStatus.ONLINE);
-        } catch (GeneralSecurityException e) {
-            logger.error("Error during reading task from google {} ", e.getMessage(), e);
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, e.getMessage());
-        } catch (IOException e) {
+            GoogleDeviceCodeResponse response = getAuthorizationforDevices();
+
+            updateStatus(ThingStatus.ONLINE, ThingStatusDetail.CONFIGURATION_PENDING,
+                    "Please authorize the device: " + response.getVerificationUrl() + " " + response.getUserCode());
+
+            scheduler.scheduleWithFixedDelay(() -> this.getAuthorizationResponse(response.getDeviceCode()), 0, 1,
+                    TimeUnit.MINUTES);
+
+        } catch (Exception e) {
             logger.error("Error during reading task from google {} ", e.getMessage(), e);
             updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, e.getMessage());
         }
 
-        // Example for background initialization:
-        /*
-         * scheduler.execute(() -> {
-         * boolean thingReachable = true; // <background task with long running initialization here>
-         * // when done do:
-         * if (thingReachable) {
-         * updateStatus(ThingStatus.ONLINE);
-         * } else {
-         * updateStatus(ThingStatus.OFFLINE);
-         * }
-         * });
-         *
-         */
+        logger.info("End initialization GoogleTasks....");
 
         // These logging types should be primarily used by bindings
         // logger.trace("Example trace message");
