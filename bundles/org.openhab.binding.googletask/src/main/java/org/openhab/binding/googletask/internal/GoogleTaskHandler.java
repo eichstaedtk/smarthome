@@ -22,9 +22,11 @@ import java.util.List;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
+import org.openhab.core.library.types.StringType;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
+import org.openhab.core.thing.ThingStatusDetail;
 import org.openhab.core.thing.binding.BaseThingHandler;
 import org.openhab.core.types.Command;
 import org.openhab.core.types.RefreshType;
@@ -79,27 +81,43 @@ public class GoogleTaskHandler extends BaseThingHandler {
                 GoogleNetHttpTransport.newTrustedTransport(), JSON_FACTORY, clientSecrets, SCOPES)
                         .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH))).build();
 
-        LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8080).setCallbackPath("/openhab")
-                .build();
+        LocalServerReceiver receiver = new LocalServerReceiver.Builder().setHost(config.getHostname())
+                .setPort(config.getPort()).setCallbackPath("/openhab").build();
 
         return new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
     }
 
-    public void readTasks() throws GeneralSecurityException, IOException {
+    public TaskList readTasks() throws GeneralSecurityException, IOException {
+
+        logger.info("Start reading task of {}", config);
 
         Tasks service = new Tasks.Builder(GoogleNetHttpTransport.newTrustedTransport(), JSON_FACTORY,
                 createCredentials()).setApplicationName(APPLICATION_NAME).build();
 
-        TaskList tasklists = service.tasklists().get("MTc0NDQ5MDgzNTM0NTY0ODE1Nzg6MDow").execute();
+        // "MTc0NDQ5MDgzNTM0NTY0ODE1Nzg6MDow"
+        TaskList tasklists = service.tasklists().get(config.getTaskListID()).execute();
 
         logger.info("Getting tasks {} ", tasklists.size());
+
+        return tasklists;
     }
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
+
+        logger.info("Start Handle Command for Channel {} {}", channelUID.getId(), command.toFullString());
+
         if (GoogleTaskBindingConstants.CHANNEL_GET_TASKS.equals(channelUID.getId())) {
             if (command instanceof RefreshType) {
-                // TODO: handle data refresh
+                logger.info("Getting Refresh Command");
+                try {
+                    TaskList taskList = readTasks();
+
+                    updateState(channelUID.getId(), StringType.valueOf(taskList.getTitle()));
+
+                } catch (Exception e) {
+                    updateState(channelUID.getId(), StringType.valueOf(e.getMessage()));
+                }
             }
 
             // TODO: handle command
@@ -128,16 +146,30 @@ public class GoogleTaskHandler extends BaseThingHandler {
         // we set this upfront to reliably check status updates in unit tests.
         updateStatus(ThingStatus.UNKNOWN);
 
+        try {
+            readTasks();
+            updateStatus(ThingStatus.ONLINE);
+        } catch (GeneralSecurityException e) {
+            logger.error("Error during reading task from google {} ", e.getMessage(), e);
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, e.getMessage());
+        } catch (IOException e) {
+            logger.error("Error during reading task from google {} ", e.getMessage(), e);
+            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, e.getMessage());
+        }
+
         // Example for background initialization:
-        scheduler.execute(() -> {
-            boolean thingReachable = true; // <background task with long running initialization here>
-            // when done do:
-            if (thingReachable) {
-                updateStatus(ThingStatus.ONLINE);
-            } else {
-                updateStatus(ThingStatus.OFFLINE);
-            }
-        });
+        /*
+         * scheduler.execute(() -> {
+         * boolean thingReachable = true; // <background task with long running initialization here>
+         * // when done do:
+         * if (thingReachable) {
+         * updateStatus(ThingStatus.ONLINE);
+         * } else {
+         * updateStatus(ThingStatus.OFFLINE);
+         * }
+         * });
+         *
+         */
 
         // These logging types should be primarily used by bindings
         // logger.trace("Example trace message");
@@ -149,5 +181,9 @@ public class GoogleTaskHandler extends BaseThingHandler {
         // Add a description to give user information to understand why thing does not work as expected. E.g.
         // updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.CONFIGURATION_ERROR,
         // "Can not access device as username and/or password are invalid");
+    }
+
+    public void setConfig(GoogleTaskConfiguration config) {
+        this.config = config;
     }
 }

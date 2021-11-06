@@ -14,6 +14,7 @@
 package org.openhab.binding.googletask.internal;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.when;
 import static org.openhab.binding.googletask.internal.GoogleTaskBindingConstants.THING_TYPE_GOOGLE_TASK_API;
 
 import java.io.IOException;
@@ -22,7 +23,6 @@ import java.security.GeneralSecurityException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.openhab.core.thing.Thing;
 
@@ -41,14 +41,23 @@ public class GoogleTaskHandlerTest {
     @Test
     void testReadingTasks() throws GeneralSecurityException, IOException {
 
-        Mockito.when(thing.getThingTypeUID()).thenReturn(THING_TYPE_GOOGLE_TASK_API);
+        when(thing.getThingTypeUID()).thenReturn(THING_TYPE_GOOGLE_TASK_API);
 
         GoogleTaskHandler handler = (GoogleTaskHandler) new GoogleTaskHandlerFactory().createHandler(thing);
+        GoogleTaskConfiguration configuration = new GoogleTaskConfiguration();
+        configuration.setHostname("localhost");
+        configuration.setPort(8080);
+        configuration.setTaskListID("MTc0NDQ5MDgzNTM0NTY0ODE1Nzg6MDow");
 
-        assertNotNull(handler);
+        if (handler != null) {
 
-        handler.createCredentials();
+            handler.setConfig(configuration);
 
-        handler.readTasks();
+            assertNotNull(handler);
+
+            handler.createCredentials();
+
+            handler.readTasks();
+        }
     }
 }

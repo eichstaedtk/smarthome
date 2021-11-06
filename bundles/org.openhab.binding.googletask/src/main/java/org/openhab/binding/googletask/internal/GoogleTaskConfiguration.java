@@ -23,6 +23,36 @@ public class GoogleTaskConfiguration {
      * Sample configuration parameters. Replace with your own.
      */
     public String hostname;
-    public String password;
-    public int refreshInterval;
+    public int port;
+    public String taskListID;
+
+    public String getHostname() {
+        return hostname;
+    }
+
+    public void setHostname(String hostname) {
+        this.hostname = hostname;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
+
+    public String getTaskListID() {
+        return taskListID;
+    }
+
+    public void setTaskListID(String taskListID) {
+        this.taskListID = taskListID;
+    }
+
+    @Override
+    public String toString() {
+        return "GoogleTaskConfiguration{" + "hostname='" + hostname + '\'' + ", port=" + port + ", taskListID='"
+                + taskListID + '\'' + '}';
+    }
 }
