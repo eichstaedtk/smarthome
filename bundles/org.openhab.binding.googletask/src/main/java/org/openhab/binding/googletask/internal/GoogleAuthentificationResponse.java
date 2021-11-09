@@ -113,15 +113,9 @@ public class GoogleAuthentificationResponse {
 
     @Override
     public String toString() {
-        return "GoogleAuthentificationResponse{" +
-            "idToken='" + idToken + '\'' +
-            ", accessToken='" + accessToken + '\'' +
-            ", expiresIn='" + expiresIn + '\'' +
-            ", refreshToken='" + refreshToken + '\'' +
-            ", scope='" + scope + '\'' +
-            ", tokenType='" + tokenType + '\'' +
-            ", error='" + error + '\'' +
-            ", errorDescription='" + errorDescription + '\'' +
-            '}';
+        return "GoogleAuthentificationResponse{" + "idToken='" + idToken + '\'' + ", accessToken='" + accessToken + '\''
+                + ", expiresIn='" + expiresIn + '\'' + ", refreshToken='" + refreshToken + '\'' + ", scope='" + scope
+                + '\'' + ", tokenType='" + tokenType + '\'' + ", error='" + error + '\'' + ", errorDescription='"
+                + errorDescription + '\'' + '}';
     }
 }

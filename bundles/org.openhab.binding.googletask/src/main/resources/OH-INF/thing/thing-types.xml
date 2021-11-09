@@ -16,8 +16,7 @@
 		<description>API for GoogleTask Binding</description>
 
 		<channels>
-			<channel id="gettasks" typeId="gettasks-channel"/>
-			<channel id="addtasks" typeId="addtasks-channel"/>
+			<channel id="gettasks" typeId="id"/>
 		</channels>
 
 		<config-description>
@@ -39,9 +38,28 @@
 	</thing-type>
 
 	<!-- Sample Channel Type -->
-	<channel-type id="gettasks-channel">
-		<item-type>String:Tasks</item-type>
-		<label>Task of User</label><!-- Use uppercase words, except prepositions. 2-3 words, max 25 chars -->
-		<description>Google Task API Get Tasks channel for GoogleTask Binding</description>
+	<channel-type id="id">
+		<item-type>String</item-type>
+		<label>ID</label>
+		<description>ID of the Task</description>
+		<state readOnly="true"/>
+	</channel-type>
+	<channel-type id="title">
+		<item-type>String</item-type>
+		<label>Title</label>
+		<description>Title of the Task</description>
+		<state readOnly="true"/>
+	</channel-type>
+	<channel-type id="updated">
+		<item-type>String</item-type>
+		<label>Updated</label>
+		<description>Updated of the Task</description>
+		<state readOnly="true"/>
+	</channel-type>
+	<channel-type id="status">
+		<item-type>String</item-type>
+		<label>Status</label>
+		<description>Status of the Task</description>
+		<state readOnly="true"/>
 	</channel-type>
 </thing:thing-descriptions>
