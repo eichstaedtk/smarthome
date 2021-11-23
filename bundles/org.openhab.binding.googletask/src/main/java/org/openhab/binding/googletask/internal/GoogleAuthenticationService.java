@@ -20,12 +20,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.http.HttpClient;
+import java.net.http.HttpClient.Version;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandlers;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.util.List;
-
 import org.eclipse.jdt.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -104,9 +105,12 @@ public class GoogleAuthenticationService {
         HttpClient httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2)
                 .connectTimeout(Duration.ofSeconds(10)).build();
 
+        // https://gmail.googleapis.com/gmail/v1/users/{userId}/messages
+        // https://tasks.googleapis.com/tasks/v1/users/@me/lists/MTc0NDQ5MDgzNTM0NTY0ODE1Nzg6MDow
+
         HttpRequest request = HttpRequest.newBuilder().GET()
                 .uri(URI.create(
-                        "https://tasks.googleapis.com/tasks/v1/users/@me/lists/MTc0NDQ5MDgzNTM0NTY0ODE1Nzg6MDow"))
+                        "https://gmail.googleapis.com/gmail/v1/users/konrad.eichstaedt@googlemail.com/messages"))
                 .setHeader("User-Agent", "Java 11 HttpClient Bot") // add request header
                 .header("Authorization", "Bearer " + oauth2accessToken).header("Content-Type", "application/json")
                 .build();
@@ -120,10 +124,10 @@ public class GoogleAuthenticationService {
         if (response.statusCode() == 200) {
             ObjectMapper mapper = new ObjectMapper();
 
-            List<Task> taskList = mapper.readValue(response.body(), new TypeReference<List<Task>>() {
+            List<Message> messageList = mapper.readValue(response.body(), new TypeReference<List<Message>>() {
             });
 
-            logger.info("Found new tasks {} ", taskList.size());
+            logger.info("Found new messageList {} ", messageList.size());
         }
     }
 
@@ -166,6 +170,44 @@ public class GoogleAuthenticationService {
         }
     }
 
+    public void startGoogleAccess() {
+
+        logger.info("Starting get authorization access code");
+
+
+        HttpClient httpClient = HttpClient.newBuilder().version(Version.HTTP_2)
+                .connectTimeout(Duration.ofSeconds(10)).build();
+
+        HttpRequest request = HttpRequest.newBuilder().GET().uri(URI.create(
+                "https://accounts.google.com/o/oauth2/v2/auth?client_id=60812911905-og6ku0g78g7f3gg2rkmkhlf1avl5iele.apps.googleusercontent.com&"
+                        + "redirect_uri=localhost:8080/openhab&response_type=code&scope=task_read"))
+                .setHeader("User-Agent", "Java 11 HttpClient Bot") // add request header
+                .header("Content-Type", "application/x-www-form-urlencoded").build();
+
+        logger.info("Sending Request {} ", request.uri().toString());
+
+        try {
+
+            HttpResponse<String> response = httpClient.send(request, BodyHandlers.ofString());
+
+            ObjectMapper mapper = new ObjectMapper();
+
+            GoogleAuthentificationResponse authentificationResponse = mapper.readValue(response.body(),
+                    GoogleAuthentificationResponse.class);
+
+            logger.info("Getting Google Device Authorization Response {} ", authentificationResponse);
+
+            if (authentificationResponse != null && authentificationResponse.getAccessToken() != null) {
+                this.oauth2accessToken = authentificationResponse.getAccessToken();
+                this.oauth2refreshToken = authentificationResponse.getRefreshToken();
+
+            }
+
+        } catch (Exception error) {
+            logger.error("Error during getting access token ", error);
+        }
+    }
+
     public GoogleDeviceCodeResponse getAuthorizationforDevices() throws IOException, InterruptedException {
 
         HttpClient httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2)
@@ -184,5 +226,13 @@ public class GoogleAuthenticationService {
                 GoogleDeviceCodeResponse.class);
         logger.info("Getting Google Device Authorization Code Response {} ", googleDeviceCodeResponse);
         return googleDeviceCodeResponse;
+    }
+
+    public String getOauth2accessToken() {
+        return oauth2accessToken;
+    }
+
+    public String getOauth2refreshToken() {
+        return oauth2refreshToken;
     }
 }

@@ -14,20 +14,13 @@ package org.openhab.binding.googletask.internal;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
-import org.openhab.core.library.types.StringType;
-import org.openhab.core.thing.Channel;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
-import org.openhab.core.thing.ThingStatusDetail;
 import org.openhab.core.thing.binding.BaseThingHandler;
-import org.openhab.core.thing.binding.ThingHandlerCallback;
-import org.openhab.core.thing.type.ChannelTypeUID;
 import org.openhab.core.types.Command;
 import org.openhab.core.types.RefreshType;
 import org.slf4j.Logger;
@@ -46,7 +39,11 @@ public class GoogleTaskHandler extends BaseThingHandler {
 
     private @Nullable GoogleTaskConfiguration config;
 
+    private GoogleAuthenticationService googleAuthenticationService = new GoogleAuthenticationService();
+
     private final Map<String, Task> tasks = new HashMap<>();
+
+    private @Nullable GoogleDeviceCodeResponse googleDeviceCodeResponse;
 
     public GoogleTaskHandler(Thing thing) {
         super(thing);
@@ -64,13 +61,37 @@ public class GoogleTaskHandler extends BaseThingHandler {
 
     public void updateTasks() {
 
-        for (Entry<String, Task> task : tasks.entrySet()) {
+        logger.info("Starting update task");
 
-            logger.info("Update All Channel and States {} ", task.getKey());
+        if (googleDeviceCodeResponse != null) {
+            googleAuthenticationService.getAuthorizationResponse(googleDeviceCodeResponse.getDeviceCode());
 
-            updateState(new ChannelUID(getThing().getUID(), "Task_" + task.getKey()),
-                    StringType.valueOf(task.getValue().getTitle()));
+            if (googleAuthenticationService.getOauth2accessToken() != null) {
+                try {
+
+                    logger.info("Starting reading task");
+
+                    googleAuthenticationService.readingTasks();
+
+                    updateStatus(ThingStatus.ONLINE);
+
+                } catch (Exception e) {
+                    logger.error("Error during update task", e);
+                }
+            }
         }
+
+        /*
+         * 
+         * for (Entry<String, Task> task : tasks.entrySet()) {
+         * 
+         * logger.info("Update All Channel and States {} ", task.getKey());
+         * 
+         * updateState(new ChannelUID(getThing().getUID(), "Task_" + task.getKey()),
+         * StringType.valueOf(task.getValue().getTitle()));
+         * }
+         * 
+         */
     }
 
     @Override
@@ -79,28 +100,36 @@ public class GoogleTaskHandler extends BaseThingHandler {
         this.tasks.put("1", new Task("1", "Erste Aufgabe", "2021-11-07", "Open"));
         this.tasks.put("2", new Task("2", "Zweite Aufgabe", "2021-11-07", "Open"));
 
-        updateStatus(ThingStatus.ONLINE);
-
-        ThingHandlerCallback thingHandlerCallback = getCallback();
-
-        for (Entry<String, Task> task : tasks.entrySet()) {
-
-            Channel channel = thingHandlerCallback
-                    .createChannelBuilder(new ChannelUID(getThing().getUID(), "Task_" + task.getKey()),
-                            new ChannelTypeUID("googletask", "title"))
-                    .withLabel("Task " + task.getKey()).build();
-
-            updateThing(editThing().withChannel(channel).build());
-        }
-
-        scheduler.scheduleAtFixedRate(() -> this.updateTasks(), 0, 60, TimeUnit.SECONDS);
-
         try {
 
+            googleAuthenticationService.startGoogleAccess();
+
+            // googleDeviceCodeResponse = googleAuthenticationService.getAuthorizationforDevices();
+
+            // updateStatus(ThingStatus.ONLINE, ThingStatusDetail.CONFIGURATION_PENDING,
+            // googleDeviceCodeResponse.getVerificationUrl() + " " + googleDeviceCodeResponse.getUserCode());
+
+            // scheduler.scheduleWithFixedDelay(() -> this.updateTasks(), 0, 60, TimeUnit.SECONDS);
+
         } catch (Exception e) {
-            logger.error("Error during reading task from google {} ", e.getMessage(), e);
-            updateStatus(ThingStatus.OFFLINE, ThingStatusDetail.COMMUNICATION_ERROR, e.getMessage());
+            logger.error("Error during initialize", e);
         }
+
+        /**
+         * 
+         * ThingHandlerCallback thingHandlerCallback = getCallback();
+         * 
+         * for (Entry<String, Task> task : tasks.entrySet()) {
+         * 
+         * Channel channel = thingHandlerCallback
+         * .createChannelBuilder(new ChannelUID(getThing().getUID(), "Task_" + task.getKey()),
+         * new ChannelTypeUID("googletask", "title"))
+         * .withLabel("Task " + task.getKey()).build();
+         * 
+         * updateThing(editThing().withChannel(channel).build());
+         * }
+         * 
+         */
 
         logger.info("End initialization GoogleTasks....");
     }
