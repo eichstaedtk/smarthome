@@ -32,12 +32,14 @@ import org.openhab.core.auth.client.oauth2.OAuthClientService;
 import org.openhab.core.auth.client.oauth2.OAuthException;
 import org.openhab.core.auth.client.oauth2.OAuthFactory;
 import org.openhab.core.auth.client.oauth2.OAuthResponseException;
+import org.openhab.core.library.types.StringType;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
 import org.openhab.core.thing.ThingStatusDetail;
 import org.openhab.core.thing.binding.BaseThingHandler;
 import org.openhab.core.types.Command;
+import org.openhab.core.types.RefreshType;
 import org.osgi.service.http.HttpService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,11 +86,18 @@ public class GoogleTaskHandler extends BaseThingHandler implements AccessTokenRe
     public void handleCommand(ChannelUID channelUID, Command command) {
 
         logger.info("Start Handle Command for Channel {} {}", channelUID.getId(), command.toFullString());
-    }
 
-    public void updateTasks() {
+        if (GoogleTaskBindingConstants.CHANNEL_GET_TASKS.equals(channelUID.getId())) {
+            if (command instanceof RefreshType) {
+                logger.info("Getting Refresh Command");
 
-        logger.info("Starting update task");
+                logger.info("Update Channel with {} ",
+                        googleGoogleTasks.stream().map(t -> t.getTitle()).collect(Collectors.joining(",")));
+
+                updateState(channelUID.getId(), StringType
+                        .valueOf(googleGoogleTasks.stream().map(t -> t.getTitle()).collect(Collectors.joining(","))));
+            }
+        }
     }
 
     @Override
@@ -175,5 +184,9 @@ public class GoogleTaskHandler extends BaseThingHandler implements AccessTokenRe
             logger.info("Found new task list {} ", googleGoogleTasks.size());
 
         }
+    }
+
+    public String getThingUID() {
+        return thing.getUID().getAsString();
     }
 }

@@ -62,6 +62,7 @@ public class GoogleAuthServlet extends HttpServlet {
                 logger.info("Found Authorization Code {} ", reqCode);
                 googleTaskHandler.authorize(reqCode);
                 googleTaskHandler.readingTasks();
+                resp.sendRedirect("/settings/things/" + googleTaskHandler.getThingUID());
             }
         } catch (Exception error) {
             logger.error("Error during authentication", error);
