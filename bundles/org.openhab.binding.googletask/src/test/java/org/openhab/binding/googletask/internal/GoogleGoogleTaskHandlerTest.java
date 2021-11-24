@@ -14,16 +14,18 @@
 package org.openhab.binding.googletask.internal;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.openhab.binding.googletask.internal.GoogleTaskBindingConstants.THING_TYPE_GOOGLE_TASK_API;
-
-import java.io.IOException;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.openhab.core.auth.client.oauth2.OAuthFactory;
 import org.openhab.core.thing.Thing;
+import org.osgi.service.http.HttpService;
 
 /**
  * Testing the GoogleTaskHandler
@@ -32,17 +34,21 @@ import org.openhab.core.thing.Thing;
  */
 
 @ExtendWith(MockitoExtension.class)
-public class GoogleTaskHandlerTest {
+public class GoogleGoogleTaskHandlerTest {
 
     @Mock
     Thing thing;
 
+    private final OAuthFactory oAuthFactory = Mockito.mock(OAuthFactory.class);
+    private final HttpService httpService = mock(HttpService.class);
+
     @Test
-    void testReadingTasks() throws IOException, InterruptedException {
+    void testReadingTasks() {
 
         when(thing.getThingTypeUID()).thenReturn(THING_TYPE_GOOGLE_TASK_API);
 
-        GoogleTaskHandler handler = (GoogleTaskHandler) new GoogleTaskHandlerFactory().createHandler(thing);
+        GoogleTaskHandler handler = (GoogleTaskHandler) new GoogleTaskHandlerFactory(oAuthFactory, httpService)
+                .createHandler(thing);
         GoogleTaskConfiguration configuration = new GoogleTaskConfiguration();
         configuration.setHostname("localhost");
         configuration.setPort(8081);

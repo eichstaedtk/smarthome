@@ -10,7 +10,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0
  */
-
 package org.openhab.binding.googletask.internal;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -22,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  * @author Konrad Eichstädt - Initial contribution
  */
 @JsonIgnoreProperties
-public class Task {
+public class GoogleTask {
 
     private String id;
 
@@ -32,15 +31,19 @@ public class Task {
 
     private String status;
 
-    public Task() {
-    }
+    private String kind;
 
-    public Task(String id, String title, String updated, String status) {
-        this.id = id;
-        this.title = title;
-        this.updated = updated;
-        this.status = status;
-    }
+    private String etag;
+
+    private String selfLink;
+
+    private String position;
+
+    private String due;
+
+    private String completed;
+
+    private String notes;
 
     public String getId() {
         return id;
@@ -72,5 +75,61 @@ public class Task {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getKind() {
+        return kind;
+    }
+
+    public void setKind(String kind) {
+        this.kind = kind;
+    }
+
+    public String getEtag() {
+        return etag;
+    }
+
+    public void setEtag(String etag) {
+        this.etag = etag;
+    }
+
+    public String getSelfLink() {
+        return selfLink;
+    }
+
+    public void setSelfLink(String selfLink) {
+        this.selfLink = selfLink;
+    }
+
+    public String getPosition() {
+        return position;
+    }
+
+    public void setPosition(String position) {
+        this.position = position;
+    }
+
+    public String getDue() {
+        return due;
+    }
+
+    public void setDue(String due) {
+        this.due = due;
+    }
+
+    public String getCompleted() {
+        return completed;
+    }
+
+    public void setCompleted(String completed) {
+        this.completed = completed;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
     }
 }

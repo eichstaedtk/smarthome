@@ -13,6 +13,8 @@
 
 package org.openhab.binding.googletask.internal;
 
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
@@ -23,35 +25,36 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
  */
 
 @JsonIgnoreProperties
-public class Message {
+public class GoogleTaskList {
 
-    private String id;
+    private String etag;
 
-    private String threadId;
+    private String kind;
 
-    private String snippet;
+    @JsonIgnoreProperties
+    private List<GoogleTask> items;
 
-    public String getId() {
-        return id;
+    public String getEtag() {
+        return etag;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setEtag(String etag) {
+        this.etag = etag;
     }
 
-    public String getThreadId() {
-        return threadId;
+    public String getKind() {
+        return kind;
     }
 
-    public void setThreadId(String threadId) {
-        this.threadId = threadId;
+    public void setKind(String kind) {
+        this.kind = kind;
     }
 
-    public String getSnippet() {
-        return snippet;
+    public List<GoogleTask> getItems() {
+        return items;
     }
 
-    public void setSnippet(String snippet) {
-        this.snippet = snippet;
+    public void setItems(List<GoogleTask> items) {
+        this.items = items;
     }
 }

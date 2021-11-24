@@ -14,21 +14,27 @@
 package org.openhab.binding.googletask.internal;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 import static org.openhab.binding.googletask.internal.GoogleTaskBindingConstants.THING_TYPE_GOOGLE_TASK_API;
 
 import org.junit.jupiter.api.Test;
+import org.openhab.core.auth.client.oauth2.OAuthFactory;
+import org.osgi.service.http.HttpService;
 
 /**
  * Testing the GoogleTaskHandlerFactory
  *
  * @author konrad.eichstaedt@gmx.de on 09.10.21.
  */
-public class GoogleTaskHandlerFactoryTest {
+public class GoogleGoogleTaskHandlerFactoryTest {
+
+    private final OAuthFactory oAuthFactory = mock(OAuthFactory.class);
+    private final HttpService httpService = mock(HttpService.class);
 
     @Test
     void testSupportedThing() {
 
-        GoogleTaskHandlerFactory factory = new GoogleTaskHandlerFactory();
+        GoogleTaskHandlerFactory factory = new GoogleTaskHandlerFactory(oAuthFactory, httpService);
 
         assertTrue(factory.supportsThingType(THING_TYPE_GOOGLE_TASK_API));
     }

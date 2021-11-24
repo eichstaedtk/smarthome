@@ -12,19 +12,37 @@
  */
 package org.openhab.binding.googletask.internal;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.util.Hashtable;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.eclipse.jdt.annotation.NonNullByDefault;
 import org.eclipse.jdt.annotation.Nullable;
+import org.openhab.core.auth.client.oauth2.AccessTokenRefreshListener;
+import org.openhab.core.auth.client.oauth2.AccessTokenResponse;
+import org.openhab.core.auth.client.oauth2.OAuthClientService;
+import org.openhab.core.auth.client.oauth2.OAuthException;
+import org.openhab.core.auth.client.oauth2.OAuthFactory;
+import org.openhab.core.auth.client.oauth2.OAuthResponseException;
 import org.openhab.core.thing.ChannelUID;
 import org.openhab.core.thing.Thing;
 import org.openhab.core.thing.ThingStatus;
+import org.openhab.core.thing.ThingStatusDetail;
 import org.openhab.core.thing.binding.BaseThingHandler;
 import org.openhab.core.types.Command;
-import org.openhab.core.types.RefreshType;
+import org.osgi.service.http.HttpService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * The {@link GoogleTaskHandler} is responsible for handling commands, which are
@@ -33,108 +51,129 @@ import org.slf4j.LoggerFactory;
  * @author Konrad Eichstädt - Initial contribution
  */
 @NonNullByDefault
-public class GoogleTaskHandler extends BaseThingHandler {
+public class GoogleTaskHandler extends BaseThingHandler implements AccessTokenRefreshListener {
 
     private final Logger logger = LoggerFactory.getLogger(GoogleTaskHandler.class);
 
     private @Nullable GoogleTaskConfiguration config;
 
-    private GoogleAuthenticationService googleAuthenticationService = new GoogleAuthenticationService();
+    private final OAuthFactory oAuthFactory;
 
-    private final Map<String, Task> tasks = new HashMap<>();
+    private @Nullable OAuthClientService oAuthClientService;
 
-    private @Nullable GoogleDeviceCodeResponse googleDeviceCodeResponse;
+    private @Nullable String oauth2accessToken;
 
-    public GoogleTaskHandler(Thing thing) {
+    private final List<GoogleTask> googleGoogleTasks = new LinkedList<>();
+
+    private final HttpService httpService;
+
+    private static final String GOOGLE_AUTH_TOKEN_URL = "https://oauth2.googleapis.com/token";
+    private static final String GOOGLE_AUTH_AUTHORIZE_URL = "https://accounts.google.com/o/oauth2/v2/auth";
+    private static final String CLIENT_ID = "60812911905-49tjpqgahmtv130j1fq5aido1jqrmhct.apps.googleusercontent.com";
+    private static final String CLIENT_SECERET = "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";
+    public static final String TASK_SCOPES = Stream.of("https://www.googleapis.com/auth/tasks")
+            .collect(Collectors.joining(" "));
+
+    public GoogleTaskHandler(Thing thing, OAuthFactory oAuthFactory, HttpService httpService) {
         super(thing);
+        this.oAuthFactory = oAuthFactory;
+        this.httpService = httpService;
     }
 
     @Override
     public void handleCommand(ChannelUID channelUID, Command command) {
 
         logger.info("Start Handle Command for Channel {} {}", channelUID.getId(), command.toFullString());
-
-        if (command instanceof RefreshType) {
-            scheduler.submit(this::updateTasks);
-        }
     }
 
     public void updateTasks() {
 
         logger.info("Starting update task");
-
-        if (googleDeviceCodeResponse != null) {
-            googleAuthenticationService.getAuthorizationResponse(googleDeviceCodeResponse.getDeviceCode());
-
-            if (googleAuthenticationService.getOauth2accessToken() != null) {
-                try {
-
-                    logger.info("Starting reading task");
-
-                    googleAuthenticationService.readingTasks();
-
-                    updateStatus(ThingStatus.ONLINE);
-
-                } catch (Exception e) {
-                    logger.error("Error during update task", e);
-                }
-            }
-        }
-
-        /*
-         * 
-         * for (Entry<String, Task> task : tasks.entrySet()) {
-         * 
-         * logger.info("Update All Channel and States {} ", task.getKey());
-         * 
-         * updateState(new ChannelUID(getThing().getUID(), "Task_" + task.getKey()),
-         * StringType.valueOf(task.getValue().getTitle()));
-         * }
-         * 
-         */
     }
 
     @Override
     public void initialize() {
         config = getConfigAs(GoogleTaskConfiguration.class);
-        this.tasks.put("1", new Task("1", "Erste Aufgabe", "2021-11-07", "Open"));
-        this.tasks.put("2", new Task("2", "Zweite Aufgabe", "2021-11-07", "Open"));
+        logger.info("Start initialization GoogleTasks....");
+
+        if (oAuthClientService == null) {
+            oAuthClientService = oAuthFactory.createOAuthClientService(thing.getUID().getAsString(),
+                    GOOGLE_AUTH_TOKEN_URL, GOOGLE_AUTH_AUTHORIZE_URL, CLIENT_ID, CLIENT_SECERET, TASK_SCOPES, false);
+        }
+
+        oAuthClientService.addAccessTokenRefreshListener(this);
 
         try {
 
-            googleAuthenticationService.startGoogleAccess();
+            httpService.registerServlet("/connectgoogle", new GoogleAuthServlet(this), new Hashtable<>(),
+                    httpService.createDefaultHttpContext());
 
-            // googleDeviceCodeResponse = googleAuthenticationService.getAuthorizationforDevices();
-
-            // updateStatus(ThingStatus.ONLINE, ThingStatusDetail.CONFIGURATION_PENDING,
-            // googleDeviceCodeResponse.getVerificationUrl() + " " + googleDeviceCodeResponse.getUserCode());
-
-            // scheduler.scheduleWithFixedDelay(() -> this.updateTasks(), 0, 60, TimeUnit.SECONDS);
+            updateStatus(ThingStatus.ONLINE, ThingStatusDetail.CONFIGURATION_PENDING,
+                    "Please open page /connectgoogle for authorization");
 
         } catch (Exception e) {
-            logger.error("Error during initialize", e);
+            logger.error("Error during authentication", e);
         }
-
-        /**
-         * 
-         * ThingHandlerCallback thingHandlerCallback = getCallback();
-         * 
-         * for (Entry<String, Task> task : tasks.entrySet()) {
-         * 
-         * Channel channel = thingHandlerCallback
-         * .createChannelBuilder(new ChannelUID(getThing().getUID(), "Task_" + task.getKey()),
-         * new ChannelTypeUID("googletask", "title"))
-         * .withLabel("Task " + task.getKey()).build();
-         * 
-         * updateThing(editThing().withChannel(channel).build());
-         * }
-         * 
-         */
 
         logger.info("End initialization GoogleTasks....");
     }
 
     public void setConfig(GoogleTaskConfiguration config) {
         this.config = config;
+    }
+
+    public String getAuthUrl() throws OAuthException {
+        return oAuthClientService.getAuthorizationUrl("http://localhost:8080/connectgoogle", null,
+                thing.getUID().getAsString());
+    }
+
+    public void authorize(String code) throws OAuthException, OAuthResponseException, IOException {
+        AccessTokenResponse accessTokenResponse = oAuthClientService.getAccessTokenResponseByAuthorizationCode(code,
+                "http://localhost:8080/connectgoogle");
+        oauth2accessToken = accessTokenResponse.getAccessToken();
+    }
+
+    @Override
+    public void onAccessTokenResponse(AccessTokenResponse tokenResponse) {
+
+        logger.info("On Access Token Response ... {}", tokenResponse);
+
+        oauth2accessToken = tokenResponse.getAccessToken();
+    }
+
+    public void readingTasks() throws IOException, InterruptedException {
+
+        logger.info("Start reading tasks from gooogle using oauth2 token {}", oauth2accessToken);
+
+        HttpClient httpClient = HttpClient.newBuilder().version(HttpClient.Version.HTTP_2)
+                .connectTimeout(Duration.ofSeconds(10)).build();
+
+        HttpRequest request = HttpRequest.newBuilder().GET()
+                .uri(URI.create("https://tasks.googleapis.com/tasks/v1/lists/MTc0NDQ5MDgzNTM0NTY0ODE1Nzg6MDow/tasks"))
+                .setHeader("User-Agent", "Java 11 HttpClient Bot") // add request header
+                .header("Authorization", "Bearer " + oauth2accessToken).header("Content-Type", "application/json")
+                .build();
+
+        logger.info("Start sending request {} ", request.uri());
+
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        logger.info("Getting Google Task Response {} {} ", response.statusCode(), response.body());
+
+        if (response.statusCode() == 200) {
+            ObjectMapper mapper = new ObjectMapper();
+
+            GoogleTaskList messageList = mapper.readValue(response.body(), GoogleTaskList.class);
+
+            if (!messageList.getItems().isEmpty()) {
+                googleGoogleTasks.clear();
+                googleGoogleTasks.addAll(messageList.getItems());
+
+                updateStatus(ThingStatus.ONLINE);
+            }
+
+            logger.info("Found new task list {} ", googleGoogleTasks.size());
+
+        }
     }
 }

@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
  *
  * @author konrad.eichstaedt@gmx.de on 09.10.21.
  */
-public class GoogleTaskConfigurationTest {
+public class GoogleGoogleTaskConfigurationTest {
 
     @Test
     void checkConfigurationValues() {

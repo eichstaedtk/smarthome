@@ -27,7 +27,9 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.util.List;
+
 import org.eclipse.jdt.annotation.Nullable;
+import org.openhab.core.auth.client.oauth2.OAuthClientService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,6 +69,11 @@ public class GoogleAuthenticationService {
     private @Nullable String oauth2accessToken;
 
     private @Nullable String oauth2refreshToken;
+
+    private OAuthClientService oauth2Service;
+
+    public GoogleAuthenticationService() {
+    }
 
     public Credential createCredentials(String hostname, int port) throws IOException, GeneralSecurityException {
         InputStream secretInputStream = GoogleTaskHandler.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
@@ -110,7 +117,7 @@ public class GoogleAuthenticationService {
 
         HttpRequest request = HttpRequest.newBuilder().GET()
                 .uri(URI.create(
-                        "https://gmail.googleapis.com/gmail/v1/users/konrad.eichstaedt@googlemail.com/messages"))
+                        "https://tasks.googleapis.com/tasks/v1/users/@me/lists/MTc0NDQ5MDgzNTM0NTY0ODE1Nzg6MDow"))
                 .setHeader("User-Agent", "Java 11 HttpClient Bot") // add request header
                 .header("Authorization", "Bearer " + oauth2accessToken).header("Content-Type", "application/json")
                 .build();
@@ -124,10 +131,11 @@ public class GoogleAuthenticationService {
         if (response.statusCode() == 200) {
             ObjectMapper mapper = new ObjectMapper();
 
-            List<Message> messageList = mapper.readValue(response.body(), new TypeReference<List<Message>>() {
+            List<GoogleTask> messageList = mapper.readValue(response.body(), new TypeReference<>() {
             });
 
-            logger.info("Found new messageList {} ", messageList.size());
+            logger.info("Found new task list {} ", messageList.size());
+
         }
     }
 
@@ -174,9 +182,8 @@ public class GoogleAuthenticationService {
 
         logger.info("Starting get authorization access code");
 
-
-        HttpClient httpClient = HttpClient.newBuilder().version(Version.HTTP_2)
-                .connectTimeout(Duration.ofSeconds(10)).build();
+        HttpClient httpClient = HttpClient.newBuilder().version(Version.HTTP_2).connectTimeout(Duration.ofSeconds(10))
+                .build();
 
         HttpRequest request = HttpRequest.newBuilder().GET().uri(URI.create(
                 "https://accounts.google.com/o/oauth2/v2/auth?client_id=60812911905-og6ku0g78g7f3gg2rkmkhlf1avl5iele.apps.googleusercontent.com&"
