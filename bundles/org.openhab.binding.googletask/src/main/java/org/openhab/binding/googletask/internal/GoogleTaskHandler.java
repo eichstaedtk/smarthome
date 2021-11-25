@@ -21,6 +21,8 @@ import java.time.Duration;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -68,6 +70,8 @@ public class GoogleTaskHandler extends BaseThingHandler implements AccessTokenRe
     private final List<GoogleTask> googleGoogleTasks = new LinkedList<>();
 
     private final HttpService httpService;
+
+    private @Nullable ScheduledFuture<?> refreshJob;
 
     private static final String GOOGLE_AUTH_TOKEN_URL = "https://oauth2.googleapis.com/token";
     private static final String GOOGLE_AUTH_AUTHORIZE_URL = "https://accounts.google.com/o/oauth2/v2/auth";
@@ -123,6 +127,14 @@ public class GoogleTaskHandler extends BaseThingHandler implements AccessTokenRe
             logger.error("Error during authentication", e);
         }
 
+        scheduler.scheduleWithFixedDelay(() -> {
+            try {
+                readingTasks();
+            } catch (Exception e) {
+                logger.error("Error reading Tasks from Google API", e);
+            }
+        }, 0, 5, TimeUnit.MINUTES);
+
         logger.info("End initialization GoogleTasks....");
     }
 
@@ -156,7 +168,7 @@ public class GoogleTaskHandler extends BaseThingHandler implements AccessTokenRe
                 .connectTimeout(Duration.ofSeconds(10)).build();
 
         HttpRequest request = HttpRequest.newBuilder().GET()
-                .uri(URI.create("https://tasks.googleapis.com/tasks/v1/lists/"+config.getTaskListID()+"/tasks"))
+                .uri(URI.create("https://tasks.googleapis.com/tasks/v1/lists/" + config.getTaskListID() + "/tasks"))
                 .setHeader("User-Agent", "Java 11 HttpClient Bot") // add request header
                 .header("Authorization", "Bearer " + oauth2accessToken).header("Content-Type", "application/json")
                 .build();
