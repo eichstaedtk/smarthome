@@ -71,8 +71,6 @@ public class GoogleTaskHandler extends BaseThingHandler implements AccessTokenRe
 
     private static final String GOOGLE_AUTH_TOKEN_URL = "https://oauth2.googleapis.com/token";
     private static final String GOOGLE_AUTH_AUTHORIZE_URL = "https://accounts.google.com/o/oauth2/v2/auth";
-    private static final String CLIENT_ID = "60812911905-49tjpqgahmtv130j1fq5aido1jqrmhct.apps.googleusercontent.com";
-    private static final String CLIENT_SECERET = "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";
     public static final String TASK_SCOPES = Stream.of("https://www.googleapis.com/auth/tasks")
             .collect(Collectors.joining(" "));
 
@@ -158,7 +156,7 @@ public class GoogleTaskHandler extends BaseThingHandler implements AccessTokenRe
                 .connectTimeout(Duration.ofSeconds(10)).build();
 
         HttpRequest request = HttpRequest.newBuilder().GET()
-                .uri(URI.create("https://tasks.googleapis.com/tasks/v1/lists/MTc0NDQ5MDgzNTM0NTY0ODE1Nzg6MDow/tasks"))
+                .uri(URI.create("https://tasks.googleapis.com/tasks/v1/lists/"+config.getTaskListID()+"/tasks"))
                 .setHeader("User-Agent", "Java 11 HttpClient Bot") // add request header
                 .header("Authorization", "Bearer " + oauth2accessToken).header("Content-Type", "application/json")
                 .build();

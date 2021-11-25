@@ -15,7 +15,7 @@ package org.openhab.binding.googletask.internal;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
- * The {@link GoogleDeviceCodeResponse} is responsible for handling commands, which are
+ * The {@link GoogleTask} is responsible for handling commands, which are
  * sent to one of the channels.
  *
  * @author Konrad Eichstädt - Initial contribution
