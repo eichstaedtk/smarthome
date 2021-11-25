@@ -19,27 +19,33 @@ package org.openhab.binding.googletask.internal;
  */
 public class GoogleTaskConfiguration {
 
-    /**
-     * Sample configuration parameters. Replace with your own.
-     */
-    public String hostname;
-    public int port;
+    public String clientID;
+    public String clientSecret;
+    public String redirectURI;
     public String taskListID;
 
-    public String getHostname() {
-        return hostname;
+    public String getClientID() {
+        return clientID;
     }
 
-    public void setHostname(String hostname) {
-        this.hostname = hostname;
+    public void setClientID(String clientID) {
+        this.clientID = clientID;
     }
 
-    public int getPort() {
-        return port;
+    public String getClientSecret() {
+        return clientSecret;
     }
 
-    public void setPort(int port) {
-        this.port = port;
+    public void setClientSecret(String clientSecret) {
+        this.clientSecret = clientSecret;
+    }
+
+    public String getRedirectURI() {
+        return redirectURI;
+    }
+
+    public void setRedirectURI(String redirectURI) {
+        this.redirectURI = redirectURI;
     }
 
     public String getTaskListID() {
@@ -52,7 +58,7 @@ public class GoogleTaskConfiguration {
 
     @Override
     public String toString() {
-        return "GoogleTaskConfiguration{" + "hostname='" + hostname + '\'' + ", port=" + port + ", taskListID='"
-                + taskListID + '\'' + '}';
+        return "GoogleTaskConfiguration{" + "clientID='" + clientID + '\'' + ", clientSecret='" + clientSecret + '\''
+                + ", redirectURI='" + redirectURI + '\'' + ", taskListID='" + taskListID + '\'' + '}';
     }
 }

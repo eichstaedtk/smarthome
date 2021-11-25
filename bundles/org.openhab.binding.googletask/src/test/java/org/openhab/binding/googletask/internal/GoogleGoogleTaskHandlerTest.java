@@ -50,8 +50,6 @@ public class GoogleGoogleTaskHandlerTest {
         GoogleTaskHandler handler = (GoogleTaskHandler) new GoogleTaskHandlerFactory(oAuthFactory, httpService)
                 .createHandler(thing);
         GoogleTaskConfiguration configuration = new GoogleTaskConfiguration();
-        configuration.setHostname("localhost");
-        configuration.setPort(8081);
         configuration.setTaskListID("MTc0NDQ5MDgzNTM0NTY0ODE1Nzg6MDow");
 
         if (handler != null) {

@@ -103,11 +103,12 @@ public class GoogleTaskHandler extends BaseThingHandler implements AccessTokenRe
     @Override
     public void initialize() {
         config = getConfigAs(GoogleTaskConfiguration.class);
-        logger.info("Start initialization GoogleTasks....");
+        logger.info("Start initialization GoogleTasks.... with following config {} ", config);
 
         if (oAuthClientService == null) {
             oAuthClientService = oAuthFactory.createOAuthClientService(thing.getUID().getAsString(),
-                    GOOGLE_AUTH_TOKEN_URL, GOOGLE_AUTH_AUTHORIZE_URL, CLIENT_ID, CLIENT_SECERET, TASK_SCOPES, false);
+                    GOOGLE_AUTH_TOKEN_URL, GOOGLE_AUTH_AUTHORIZE_URL, config.getClientID(), config.getClientSecret(),
+                    TASK_SCOPES, false);
         }
 
         oAuthClientService.addAccessTokenRefreshListener(this);
@@ -132,13 +133,12 @@ public class GoogleTaskHandler extends BaseThingHandler implements AccessTokenRe
     }
 
     public String getAuthUrl() throws OAuthException {
-        return oAuthClientService.getAuthorizationUrl("http://localhost:8080/connectgoogle", null,
-                thing.getUID().getAsString());
+        return oAuthClientService.getAuthorizationUrl(config.getRedirectURI(), null, thing.getUID().getAsString());
     }
 
     public void authorize(String code) throws OAuthException, OAuthResponseException, IOException {
         AccessTokenResponse accessTokenResponse = oAuthClientService.getAccessTokenResponseByAuthorizationCode(code,
-                "http://localhost:8080/connectgoogle");
+                config.getRedirectURI());
         oauth2accessToken = accessTokenResponse.getAccessToken();
     }
 
