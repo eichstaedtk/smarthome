@@ -42,7 +42,8 @@ public class GoogleTaskHandlerFactory extends BaseThingHandlerFactory {
     private static final Set<ThingTypeUID> SUPPORTED_THING_TYPES_UIDS = Set.of(THING_TYPE_GOOGLE_TASK_API);
 
     private final OAuthFactory oAuthFactory;
-    private @NonNullByDefault({}) HttpService httpService;
+    @NonNullByDefault({})
+    private final HttpService httpService;
 
     @Activate
     public GoogleTaskHandlerFactory(@Reference OAuthFactory oAuthFactory, @Reference HttpService httpService) {

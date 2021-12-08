@@ -94,10 +94,10 @@ public class GoogleTaskHandler extends BaseThingHandler implements AccessTokenRe
                 logger.info("Getting Refresh Command");
 
                 logger.info("Update Channel with {} ",
-                        googleGoogleTasks.stream().map(t -> t.getTitle()).collect(Collectors.joining(",")));
+                        googleGoogleTasks.stream().map(GoogleTask::getTitle).collect(Collectors.joining(",")));
 
                 updateState(channelUID.getId(), StringType
-                        .valueOf(googleGoogleTasks.stream().map(t -> t.getTitle()).collect(Collectors.joining(","))));
+                        .valueOf(googleGoogleTasks.stream().map(GoogleTask::getTitle).collect(Collectors.joining(","))));
             }
         }
     }
