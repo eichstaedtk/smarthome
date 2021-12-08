@@ -16,10 +16,10 @@ package org.openhab.binding.googletask.internal;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.util.Objects;
 
 /**
- * The {@link GoogleDeviceCodeResponse} is responsible for handling commands, which are
- * sent to one of the channels.
+ * The {@link GoogleTaskList} is a domain object class of google task list
  *
  * @author Konrad Eichstädt - Initial contribution
  */
@@ -56,5 +56,32 @@ public class GoogleTaskList {
 
     public void setItems(List<GoogleTask> items) {
         this.items = items;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        GoogleTaskList that = (GoogleTaskList) o;
+        return Objects.equals(etag, that.etag) && Objects.equals(kind, that.kind)
+            && Objects.equals(items, that.items);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(etag, kind, items);
+    }
+
+    @Override
+    public String toString() {
+        return "GoogleTaskList{" +
+            "etag='" + etag + '\'' +
+            ", kind='" + kind + '\'' +
+            ", items=" + items +
+            '}';
     }
 }

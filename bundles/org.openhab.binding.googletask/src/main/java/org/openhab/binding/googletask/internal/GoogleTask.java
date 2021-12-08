@@ -13,6 +13,7 @@
 package org.openhab.binding.googletask.internal;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import java.util.Objects;
 
 /**
  * The {@link GoogleTask} is responsible for handling commands, which are
@@ -131,5 +132,39 @@ public class GoogleTask {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        GoogleTask that = (GoogleTask) o;
+        return id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "GoogleTask{" +
+            "id='" + id + '\'' +
+            ", title='" + title + '\'' +
+            ", updated='" + updated + '\'' +
+            ", status='" + status + '\'' +
+            ", kind='" + kind + '\'' +
+            ", etag='" + etag + '\'' +
+            ", selfLink='" + selfLink + '\'' +
+            ", position='" + position + '\'' +
+            ", due='" + due + '\'' +
+            ", completed='" + completed + '\'' +
+            ", notes='" + notes + '\'' +
+            '}';
     }
 }
