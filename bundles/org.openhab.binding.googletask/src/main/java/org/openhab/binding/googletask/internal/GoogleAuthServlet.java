@@ -23,6 +23,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.eclipse.jetty.util.MultiMap;
 import org.eclipse.jetty.util.UrlEncoded;
+import org.openhab.core.auth.client.oauth2.OAuthException;
+import org.openhab.core.auth.client.oauth2.OAuthResponseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,16 +58,18 @@ public class GoogleAuthServlet extends HttpServlet {
                 final MultiMap<String> params = new MultiMap<>();
                 UrlEncoded.decodeTo(req.getQueryString(), params, StandardCharsets.UTF_8.name());
                 final String reqCode = params.getString("code");
-                final String reqState = params.getString("state");
                 final String reqError = params.getString("error");
 
                 logger.info("Found Authorization Code {} ", reqCode);
-                googleTaskHandler.authorize(reqCode);
-                googleTaskHandler.readingTasks();
-                resp.sendRedirect("/settings/things/" + googleTaskHandler.getThingUID());
+                if(reqCode != null && !reqCode.isEmpty() && (reqError == null || reqError.isEmpty())) {
+                    googleTaskHandler.authorize(reqCode);
+                    googleTaskHandler.readingTasks();
+                    resp.sendRedirect("/settings/things/" + googleTaskHandler.getThingUID());
+                }
             }
-        } catch (Exception error) {
+        } catch (InterruptedException | OAuthResponseException |OAuthException error) {
             logger.error("Error during authentication", error);
+            throw new ServletException("Error during authentication ....",error);
         }
     }
 }
