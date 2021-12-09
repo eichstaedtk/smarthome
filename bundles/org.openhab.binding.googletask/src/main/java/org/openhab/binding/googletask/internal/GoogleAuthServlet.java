@@ -61,15 +61,15 @@ public class GoogleAuthServlet extends HttpServlet {
                 final String reqError = params.getString("error");
 
                 logger.info("Found Authorization Code {} ", reqCode);
-                if(reqCode != null && !reqCode.isEmpty() && (reqError == null || reqError.isEmpty())) {
+                if (reqCode != null && !reqCode.isEmpty() && (reqError == null || reqError.isEmpty())) {
                     googleTaskHandler.authorize(reqCode);
                     googleTaskHandler.readingTasks();
                     resp.sendRedirect("/settings/things/" + googleTaskHandler.getThingUID());
                 }
             }
-        } catch (InterruptedException | OAuthResponseException |OAuthException error) {
+        } catch (InterruptedException | OAuthResponseException | OAuthException error) {
             logger.error("Error during authentication", error);
-            throw new ServletException("Error during authentication ....",error);
+            throw new ServletException("Error during authentication ....", error);
         }
     }
 }

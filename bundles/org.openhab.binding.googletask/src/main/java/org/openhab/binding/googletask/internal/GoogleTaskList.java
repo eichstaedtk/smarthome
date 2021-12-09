@@ -14,9 +14,9 @@
 package org.openhab.binding.googletask.internal;
 
 import java.util.List;
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import java.util.Objects;
 
 /**
  * The {@link GoogleTaskList} is a domain object class of google task list
@@ -67,8 +67,7 @@ public class GoogleTaskList {
             return false;
         }
         GoogleTaskList that = (GoogleTaskList) o;
-        return Objects.equals(etag, that.etag) && Objects.equals(kind, that.kind)
-            && Objects.equals(items, that.items);
+        return Objects.equals(etag, that.etag) && Objects.equals(kind, that.kind) && Objects.equals(items, that.items);
     }
 
     @Override
@@ -78,10 +77,6 @@ public class GoogleTaskList {
 
     @Override
     public String toString() {
-        return "GoogleTaskList{" +
-            "etag='" + etag + '\'' +
-            ", kind='" + kind + '\'' +
-            ", items=" + items +
-            '}';
+        return "GoogleTaskList{" + "etag='" + etag + '\'' + ", kind='" + kind + '\'' + ", items=" + items + '}';
     }
 }

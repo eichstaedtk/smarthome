@@ -96,8 +96,8 @@ public class GoogleTaskHandler extends BaseThingHandler implements AccessTokenRe
                 logger.info("Update Channel with {} ",
                         googleGoogleTasks.stream().map(GoogleTask::getTitle).collect(Collectors.joining(",")));
 
-                updateState(channelUID.getId(), StringType
-                        .valueOf(googleGoogleTasks.stream().map(GoogleTask::getTitle).collect(Collectors.joining(","))));
+                updateState(channelUID.getId(), StringType.valueOf(
+                        googleGoogleTasks.stream().map(GoogleTask::getTitle).collect(Collectors.joining(","))));
             }
         }
     }
@@ -186,7 +186,8 @@ public class GoogleTaskHandler extends BaseThingHandler implements AccessTokenRe
 
             if (!messageList.getItems().isEmpty()) {
                 googleGoogleTasks.clear();
-                googleGoogleTasks.addAll(messageList.getItems());
+                googleGoogleTasks.addAll(messageList.getItems().stream()
+                        .filter(t -> t.getStatus().equals("needsAction")).collect(Collectors.toList()));
 
                 updateStatus(ThingStatus.ONLINE);
             }
